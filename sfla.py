@@ -1,10 +1,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
-#import seaborn as sns
-#sns.set_style("darkgrid")
-#sns.set_context("notebook")
 
-def opt_func(value):
+def distance_ab():
+    """ Calculates the distance between two given points
+    Arguments:
+        point_a {np.ndarray} -- First Point
+        point_b {np.ndarray} -- Second Point
+    Returns:
+        float -- The value of the distance between a and b
+    """
+    d = np.sqrt()
+
+def opt_func(frog, obstacles, w1, w2):
     """The mathematical function to optimize. Here it calculates the distance to origin,
     i.e. optimal solution(minimum) is at 0.
     
@@ -14,7 +21,12 @@ def opt_func(value):
     Returns:
         float -- The output value or fitness of the frog
     """
+    #Obstacles
+    for obs in obstacles:
+        d = np.linalg.norm(obs-frog)
 
+        min_d = np.minimum()
+    output= w1 * np.exp(-)
     output = 0
     return output
 
@@ -30,7 +42,14 @@ def gen_frogs(frogs, dimension, sigma, mu):
     Returns:
         numpy.ndarray -- A frogs x dimension array
     """
-    frogs = sigma * (np.random.randn(frogs, dimension)) + mu
+    sigma_x = 50
+    sigma_y = 8
+    mu = 50
+    # Find random positions close to the actual position
+    xi = np.random.normal(mu, sigma_x, frogs)
+    yi = np.random.normal(mu, sigma_y, frogs)
+    frogs = np.stack((xi, yi), axis = 1)
+    #frogs = sigma * (np.random.randn(frogs, dimension)) + mu
     return frogs
 
 def sort_frogs(frogs, mplx_no, opt_func):
