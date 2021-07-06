@@ -30,7 +30,7 @@ def gen_frogs(frogs, dimension, sigma, mu):
         numpy.ndarray -- A frogs x dimension array
     """
     sigma_x = 50
-    sigma_y = 8
+    sigma_y = 50
     mu = 50
     # Find random positions close to the actual position
     xi = np.random.normal(mu, sigma_x, frogs)
