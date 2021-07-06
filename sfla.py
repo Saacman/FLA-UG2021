@@ -6,7 +6,11 @@ def opt_func(frog, obstacles, w1, w2, target):
     """The mathematical function to optimize.
     
     Arguments:
-        value {np.ndarray} -- An individual value or frog
+        frog {np.ndarray} -- An individual value or frog
+        obstacles {np.ndarray} -- An array containing the obstacles registered by the sensors
+        w1 {int} -- Weight value for obstacle penalization
+        w2 {int} -- Weight value for target penalization
+        target {np.ndarray} -- An array containing the target coordinates
     
     Returns:
         float -- The output value or fitness of the frog
@@ -29,12 +33,11 @@ def gen_frogs(frogs, dimension, sigma, mu):
     Returns:
         numpy.ndarray -- A frogs x dimension array
     """
-    sigma_x = 50
-    sigma_y = 50
+    # Reemplazar mu por la posición actual, necesito generar ranas alrededor de la posición actual
     mu = 50
     # Find random positions close to the actual position
-    xi = np.random.normal(mu, sigma_x, frogs)
-    yi = np.random.normal(mu, sigma_y, frogs)
+    xi = np.random.normal(mu, sigma, frogs)
+    yi = np.random.normal(mu, sigma, frogs)
     frogs = np.stack((xi, yi), axis = 1)
     #frogs = sigma * (np.random.randn(frogs, dimension)) + mu
     return frogs
