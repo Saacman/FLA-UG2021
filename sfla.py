@@ -6,30 +6,37 @@ import time
 # Path control es importante en github
 
 class sflaSolver:
-    def __init__(self,frogs_no, mplx_no, w1, w2, sigma) -> None:
-        #Inicializar los parámetros del algoritmo
+    def __init__(self, frogs_no, mplx_no, w1, w2, sigma) -> None:
+        # Inicializar los parámetros del algoritmo
         self.frogs_no = frogs_no
         self.mplx_no = mplx_no
         self.w1 = w1
         self.w2 = w2
         self.sigma = sigma
 
-    def opt_func(self, frog):
+    def opt_func(self, frog, ffnc='exp'):
         """Fitness function. Evaluates the fitness of the given frog
-    
+
         Arguments:
             frog {np.ndarray} -- An individual value or frog
-    
+
         Returns:
             float -- The output value or fitness of the frog
         """
         # Find the distances between the frog and registered obstacles
         distances = np.array(list(map(np.linalg.norm, self.obstacles - frog)))
         # Fitness function
-        output = self.w1 * np.exp(-np.amin(distances)) + self.w2 * \
-            np.linalg.norm(self.target - frog)
-        return output
+        if ffnc == 'exp':
+            output = self.w1 * np.exp(-np.amin(distances)) + self.w2 * \
+                np.linalg.norm(self.target - frog)
+        elif ffnc == 'rtnl':
+            output = self.w1 * (1 / np.amin(distances)) + self.w2 * \
+                np.linalg.norm(self.target - frog)
+        else:
+            output = -1
+            print("Unknown fitness function")
 
+        return output
 
     def gen_frogs(self, n_frogs):
         """Generates a random frog using a gaussian normal distribution around the position
@@ -40,13 +47,12 @@ class sflaSolver:
         Returns:
             numpy.ndarray -- A frogs x dimension array
         """
-        
+
         # Create random positions close to the current position
         xi = np.random.normal(self.start[0], self.sigma, n_frogs)
         yi = np.random.normal(self.start[1], self.sigma, n_frogs)
         frogs = np.stack((xi, yi), axis=1)
         return frogs
-
 
     def sort_frogs(self, frogs, mplx_no):
         """Sorts the frogs in decending order of fitness by the given function.
@@ -60,8 +66,8 @@ class sflaSolver:
         """
 
         # Find fitness of each frog
-        fitness = np.array(list(map(self.opt_func, frogs,)))
-        #fitness = np.array([self.opt_func(x) for x in self.frogs])
+        #fitness = np.array(list(map(self.opt_func, frogs)))
+        fitness = np.array([self.opt_func(x, 'rtnl') for x in frogs])
         # Sort the indices in decending order by fitness
         sorted_fitness = np.argsort(fitness)
         # Empty holder for memeplexes
@@ -71,7 +77,6 @@ class sflaSolver:
             for i in range(mplx_no):
                 memeplexes[i, j] = sorted_fitness[i+(mplx_no*j)]
         return memeplexes
-
 
     def local_search(self, frogs, memeplex):
         """Performs the local search for a memeplex.
@@ -96,7 +101,7 @@ class sflaSolver:
         # If change not better, random new worst frog
         if self.opt_func(frog_w_new) > self.opt_func(frog_w):
             frog_w_new = self.gen_frogs(1
-            )[0]
+                                        )[0]
         # Replace worst frog
         frogs[int(memeplex[-1])] = frog_w_new
         return frogs
@@ -121,7 +126,7 @@ class sflaSolver:
         return temp
 
 # Entry point, con todos los argumentos que se requieren. Tal vez mover para acá el numero de ranas y de mplx
-    def sfla(self, start_pos, target_pos, obstacles, mplx_iters=10, solun_iters=50):
+    def sfla(self, start_pos, target_pos, obstacles, mplx_iters=10, solun_iters=30):
         """Performs the Shuffled Leaping Frog Algorithm.
 
         Arguments:
