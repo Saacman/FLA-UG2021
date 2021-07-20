@@ -16,7 +16,7 @@ detectW = np.zeros(16)
 braitenbergL = np.array([-0.2,-0.4,-0.6,-0.8,-1,-1.2,-1.4,-1.6, 0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
 braitenbergR = np.array([-1.6,-1.4,-1.2,-1,-0.8,-0.6,-0.4,-0.2, 0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
 v0 = 2
-obstacles = np.zeros((16,2))
+#obstacles = np.zeros((16,2))
 #<-----------------------------------Control----------------------------------------->
 # Controller gains (linear and heading)
 Kv = 0.5
@@ -31,7 +31,7 @@ def braitenberg(clientID, usensor):
     Braitenberg algorithm for the front sensors of the pioneer 3dx
     """
     for i in range(len(usensor)):
-        err, state, point, detectedObj, detectedSurfNormVec = vrep.simxReadProximitySensor(clientID, usensor[i], vrep.simx_opmode_oneshot)
+        err, state, point, detectedObj, detectedSurfNormVec = vrep.simxReadProximitySensor(clientID, usensor[i], vrep.simx_opmode_buffer)
         distance = np.linalg.norm(point)
         # if a detection occurs
         if state and (distance < noDetectDist): # don't care about distant objects
@@ -50,34 +50,42 @@ def sense_obstacles(clientID, usensor):
     """
    
     """
+    obstacles = np.empty((0,2))
     for i in range(len(usensor)):
-        err, state, point, dObj, dSurfNormVec = vrep.simxReadProximitySensor(clientID, usensor[i], vrep.simx_opmode_oneshot)
+        err, state, point, dObj, dSurfNormVec = vrep.simxReadProximitySensor(clientID, usensor[i], vrep.simx_opmode_buffer)
         # if a detection occurs
         if state:
             # Get the obstacle position
-            sensor_pos = vrep.simxGetObjectPosition(clientID, usensor[i], -1, vrep.simx_opmode_oneshot)
-            sensor_orn = vrep.simxGetObjectOrientation(clientID, usensor[i], -1, vrep.simx_opmode_oneshot)
-            obstacles[i] = transformB2A(sensor_orn, sensor_pos, point)[:2]
-        else:
-            obstacles[i] = 1000,1000
+            ret, sensor_pos = vrep.simxGetObjectPosition(clientID, usensor[i], -1, vrep.simx_opmode_buffer)
+            ret, sensor_orn = vrep.simxGetObjectOrientation(clientID, usensor[i], -1, vrep.simx_opmode_buffer)
+            obstacles = np.vstack((obstacles, transformB2A(sensor_orn, sensor_pos, point)[:2]))
+
     return obstacles
 
 def rotx(theta):
-    Rx = np.matrix([[1,0,0],[0,np.cos(theta),-np.sin(theta)],[0,np.sin(theta),np.cos(theta)]])
+    Rx = np.array([[1,0,0],[0,np.cos(theta),-np.sin(theta)],[0,np.sin(theta),np.cos(theta)]])
     return Rx
 
 def roty(theta):
-    Ry = np.matrix([[np.cos(theta),0,np.sin(theta)],[0,1,0],[-np.sin(theta),0,np.cos(theta)]])
+    Ry = np.array([[np.cos(theta),0,np.sin(theta)],[0,1,0],[-np.sin(theta),0,np.cos(theta)]])
     return Ry
 
 def rotz(theta):
-    Rz = np.matrix([[np.cos(theta),-np.sin(theta),0],[np.sin(theta),np.cos(theta),0],[0,0,1]])
+    Rz = np.array([[np.cos(theta),-np.sin(theta),0],[np.sin(theta),np.cos(theta),0],[0,0,1]])
     return Rz
 
 def transformB2A(euler, trans, pos_b):
-    AB_R = np.dot(rotx(euler[0]), np.dot(roty(euler[1]), rotz(euler[2])))
-    rotated = np.dot(AB_R, pos_b.reshape(3, 1))
-    return rotated + np.array(trans).reshape(3,1)
+    """
+    Transform point from system B to A given
+    the translation and rotation angles
+    """
+    alpha = euler[0]
+    beta = euler[1]
+    gamma = euler[2]
+    pos_b = np.array(pos_b)
+    AB_R = np.dot(rotx(alpha), np.dot(roty(beta), rotz(gamma)))
+    rotated = np.dot(AB_R, pos_b.reshape(3,1))
+    return (rotated + np.array(trans).reshape(3,1)).reshape(3)
 
 def mtransfB2A(rotAngle, B_ACoords):
     """

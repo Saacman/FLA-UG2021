@@ -1,9 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import time
 
-
-# Path control es importante en github
 
 class sflaSolver:
     def __init__(self, frogs_no, mplx_no, w1, w2, sigma) -> None:
@@ -25,12 +22,13 @@ class sflaSolver:
         """
         # Find the distances between the frog and registered obstacles
         distances = np.array(list(map(np.linalg.norm, self.obstacles - frog)))
+        norm = np.amin(distances) if distances.size else 0
         # Fitness function
         if ffnc == 'exp':
-            output = self.w1 * np.exp(-np.amin(distances)) + self.w2 * \
+            output = self.w1 * np.exp(-norm) + self.w2 * \
                 np.linalg.norm(self.target - frog)
         elif ffnc == 'rtnl':
-            output = self.w1 * (1 / np.amin(distances)) + self.w2 * \
+            output = self.w1 * (1 / norm) + self.w2 * \
                 np.linalg.norm(self.target - frog)
         else:
             output = -1
@@ -168,23 +166,3 @@ class sflaSolver:
                 if self.opt_func(new_best_solun) < self.opt_func(best_solun):
                     best_solun = new_best_solun
         return best_solun, frogs, memeplexes.astype(int)
-
-
-if __name__ == '__main__':
-    # Run algorithm
-    obstacles = np.array([[4, 5], [6, 6], [8, 9]])
-    my_sfla = sflaSolver(60, 6, 5, 12, 1)
-    solun, frogs, memeplexes = my_sfla.sfla((2, 3), (15, 15), obstacles)
-    print(f"Optimal Solution: {solun}")
-    fig, ax = plt.subplots()
-    ax.scatter(2, 3)
-    ax.scatter(*obstacles.T)
-    ax.scatter(15, 15)
-    ax.scatter(solun[0], solun[1])
-    # Plot properties
-    plt.legend()
-    plt.xlabel("x-axis")
-    plt.ylabel("y-axis")
-    plt.title("Shuffled Frogs")
-    # Show plot
-    plt.show()

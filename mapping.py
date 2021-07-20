@@ -81,7 +81,6 @@ class GridMap:
         p = point + self.coffset
         # Add columns to the left, if needed
         while p[0] < 0:
-            #n = abs(p[0])
             # Add 10 columns at once, to avoid using this block too often
             bffr = np.ones((self.grid.shape[0], 10)) * 0.5
             self.grid = np.concatenate((bffr, self.grid), axis=1)

@@ -1,15 +1,16 @@
-"""
-
-Programa principal
-"""
+# To add a new cell, type '# %%'
+# To add a new markdown cell, type '# %% [markdown]'
+# %%
 import numpy as np
-import time
-import math as m
 import sys
+import time
 import sim as vrep # access all the VREP elements
 import pathcontrol as pc
 import sfla
+import matplotlib.pyplot as plt
 
+
+# %%
 #<---------------------------------Initialization--------------------------------------->
 vrep.simxFinish(-1) # just in case, close all opened connections
 clientID=vrep.simxStart('127.0.0.1',-1,True,True,5000,5) # start a connection
@@ -18,6 +19,9 @@ if clientID!=-1:
 else:
 	print('Not connected to remote API server')
 	sys.exit("No connection")
+
+# Getting handles for the target
+err, goal = vrep.simxGetObjectHandle(clientID, 'Goal', vrep.simx_opmode_blocking)
 
 # Getting handles for the motors and robot
 err, motorL = vrep.simxGetObjectHandle(clientID, 'Pioneer_p3dx_leftMotor', vrep.simx_opmode_blocking)
@@ -34,28 +38,56 @@ for i in range(1,17):
 for i in range(16):
     err, state, point, detectedObj, detectedSurfNormVec = vrep.simxReadProximitySensor(
         clientID, usensor[i], vrep.simx_opmode_streaming)
+    ret, sensor_pos = vrep.simxGetObjectPosition(clientID, usensor[i], -1, vrep.simx_opmode_streaming)
+    ret, sensor_orn = vrep.simxGetObjectOrientation(clientID, usensor[i], -1, vrep.simx_opmode_streaming)
 
 
+# %%
 #<-----------------------------------Control----------------------------------------->
+
+ret, target = vrep.simxGetObjectPosition(clientID, goal, -1, vrep.simx_opmode_blocking)
+target = np.array(target[:2])
+ret, cur_pos = vrep.simxGetObjectPosition(clientID, robot, -1, vrep.simx_opmode_blocking)
+cur_pos = np.array(cur_pos[:2])
 
 # Create an instance of the solver
 path_solver = sfla.sflaSolver(30, 5, 7, 12, 0.5)
-target = np.array([3,-3.85])
-ret, cur_pos = vrep.simxGetObjectPosition(clientID, robot, -1, vrep.simx_opmode_oneshot)
+
+
+# %%
 path = np.empty((0,2))
-cur_pos = np.array(cur_pos[:2])
-while np.linalg.norm(target - cur_pos) > 0.4:
+sensed_obs = np.empty((0,2))
+while np.linalg.norm(target - cur_pos) > 0.2:
+    errf = vrep.simxSetJointTargetVelocity(clientID, motorL, 0, vrep.simx_opmode_streaming)
+    errf = vrep.simxSetJointTargetVelocity(clientID, motorR, 0, vrep.simx_opmode_streaming)
     obstacles = pc.sense_obstacles(clientID, usensor)
     cur_pos, frogs, memeplexes = path_solver.sfla(cur_pos, target, obstacles)
-    print(cur_pos)
-    while True:
+    print(f'Frog. {cur_pos}')
+    path = np.vstack((path, cur_pos))
+    sensed_obs = np.vstack((sensed_obs, obstacles))
+    errp = 10
+    t = time.time()
+    while errp > 0.2:
+        avoid, ulb, urb = pc.braitenberg(clientID, usensor)
         errp, ulc, urc, pos, rot = pc.continuosControl(clientID, robot, cur_pos)
-    #path = np.vstack((path, pos))
-        errf = vrep.simxSetJointTargetVelocity(clientID, motorL, ulc, vrep.simx_opmode_streaming)
-        errf = vrep.simxSetJointTargetVelocity(clientID, motorR, urc, vrep.simx_opmode_streaming)
-        if ulc == 0 and urc == 0:
+        ul = ulb if avoid else ulc
+        ur = urb if avoid else urc
+        errf = vrep.simxSetJointTargetVelocity(clientID, motorL, ul, vrep.simx_opmode_streaming)
+        errf = vrep.simxSetJointTargetVelocity(clientID, motorR, ur, vrep.simx_opmode_streaming)
+        if time.time() - t > 20:
             break
-
 
 # The End
 vrep.simxStopSimulation(clientID, vrep.simx_opmode_oneshot)
+
+
+# %%
+fig, ax = plt.subplots()
+
+ax.plot(*path.T)
+pc.imgscatter(ax, 'img/frog.png', path)
+
+ax.scatter(*sensed_obs.T)
+plt.show()
+
+
