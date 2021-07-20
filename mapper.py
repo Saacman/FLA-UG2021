@@ -43,16 +43,16 @@ pos0 = np.array(pos0)
 
 
 # TODO: translate the coords in setPoint
-img = "map.png"
+img = "map_lowres.png"
 if os.path.exists(img):
     print("Loading map...")
-    mp = GridMap.loadImg(img)
+    mp = GridMap.loadImg(img,tsize = 1)
 else:
     print("Creating map...")
-    mp = GridMap(init_pos = pos0[:2])
+    mp = GridMap(init_pos = pos0[:2],tile_size = 1)
     
 t = time.time()
-while time.time()-t < 60:
+while time.time()-t < 150:
     err, carpos = vrep.simxGetObjectPosition(
         clientID, sphere, -1, vrep.simx_opmode_oneshot_wait)
     carpos = np.array(carpos)
@@ -90,7 +90,7 @@ while time.time()-t < 60:
 # The End
 vrep.simxStopSimulation(clientID, vrep.simx_opmode_oneshot)
 final = mp.getGrid()
-mp.saveImg("map.png")
+mp.saveImg("map_lowres.png")
 plt.imshow(final)
 plt.show()
 print(mp.ipos)

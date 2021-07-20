@@ -2,7 +2,7 @@ import sfla
 import numpy as np
 import matplotlib.pyplot as plt
 
-obstacles = np.array([[4, 5], [6, 6], [8, 9]])
+obstacles = np.array([[4, 5], [5, 5], [6, 5], [7,5], [7,6], [7,7]])
 path_solver = sfla.sflaSolver(30, 5, 7, 12, 1)
 cur_pos = np.array([2,3])
 target = np.array([15,15])

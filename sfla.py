@@ -66,8 +66,8 @@ class sflaSolver:
         """
 
         # Find fitness of each frog
-        #fitness = np.array(list(map(self.opt_func, frogs)))
-        fitness = np.array([self.opt_func(x, 'rtnl') for x in frogs])
+        fitness = np.array(list(map(self.opt_func, frogs)))
+        #fitness = np.array([self.opt_func(x) for x in frogs])
         # Sort the indices in decending order by fitness
         sorted_fitness = np.argsort(fitness)
         # Empty holder for memeplexes
@@ -100,8 +100,7 @@ class sflaSolver:
             frog_w_new = frog_w + (np.random.rand() * (frog_g - frog_w))
         # If change not better, random new worst frog
         if self.opt_func(frog_w_new) > self.opt_func(frog_w):
-            frog_w_new = self.gen_frogs(1
-                                        )[0]
+            frog_w_new = self.gen_frogs(1)[0]
         # Replace worst frog
         frogs[int(memeplex[-1])] = frog_w_new
         return frogs
