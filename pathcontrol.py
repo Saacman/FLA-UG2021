@@ -5,6 +5,7 @@ Funciones utilizadas
 from scipy.interpolate import interp1d
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import math as m
 import sim as vrep
 #<---------------------------------Braitenberg--------------------------------------->
@@ -121,8 +122,6 @@ def continuosControl(clientID, robot, goal):
     ret, rot = vrep.simxGetObjectOrientation(clientID, robot, -1, vrep.simx_opmode_oneshot)
 
     errp = m.sqrt((xd-pos[0])**2 + (yd-pos[1])**2)
-    if errp < 0.1:
-        return errp, 0, 0, pos, rot
     angd = m.atan2(yd-pos[1], xd-pos[0])
     errh = angdiff(rot[2], angd)
     v = Kv*errp
@@ -138,3 +137,17 @@ def distance2p(a, b):
     d = m.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2)
     return d
 
+def imgscatter(ax, img, points):
+    """
+    A scatter plot of the given points, using the image at the given path
+    Arguments:
+            ax - {axes.Axes} or array of Axea
+            img - Path string
+            points - numpy array of points to scatter
+    """
+    ax.scatter(*points.T)
+    image = plt.imread(img)
+    image_box = OffsetImage(image, zoom=0.03)
+    for x0, y0 in points:
+        ab = AnnotationBbox(image_box, (x0, y0), frameon=False)
+        ax.add_artist(ab)
