@@ -65,7 +65,6 @@ class sflaSolver:
 
         # Find fitness of each frog
         fitness = np.array(list(map(self.opt_func, frogs)))
-        #fitness = np.array([self.opt_func(x) for x in frogs])
         # Sort the indices in decending order by fitness
         sorted_fitness = np.argsort(fitness)
         # Empty holder for memeplexes

@@ -58,24 +58,27 @@ path_solver = sfla.sflaSolver(30, 5, 7, 12, 0.5)
 path = np.empty((0,2))
 sensed_obs = np.empty((0,2))
 while np.linalg.norm(target - cur_pos) > 0.2:
+    # Stop te wheels while we do another calculation
     errf = vrep.simxSetJointTargetVelocity(clientID, motorL, 0, vrep.simx_opmode_streaming)
     errf = vrep.simxSetJointTargetVelocity(clientID, motorR, 0, vrep.simx_opmode_streaming)
+    # Read the input from the sensors
     obstacles = pc.sense_obstacles(clientID, usensor)
+    # Get the new position in the path
     cur_pos, frogs, memeplexes = path_solver.sfla(cur_pos, target, obstacles)
-    print(f'Frog. {cur_pos}')
     path = np.vstack((path, cur_pos))
     sensed_obs = np.vstack((sensed_obs, obstacles))
     errp = 10
     t = time.time()
-    while errp > 0.2:
+    # Try to follow the given solution for 10 seconds
+    while errp > 0.2 and time.time() - t < 10:
         avoid, ulb, urb = pc.braitenberg(clientID, usensor)
         errp, ulc, urc, pos, rot = pc.continuosControl(clientID, robot, cur_pos)
+        # If an obstacle has to be avoided, give control to the braitenberg output
         ul = ulb if avoid else ulc
         ur = urb if avoid else urc
         errf = vrep.simxSetJointTargetVelocity(clientID, motorL, ul, vrep.simx_opmode_streaming)
         errf = vrep.simxSetJointTargetVelocity(clientID, motorR, ur, vrep.simx_opmode_streaming)
-        if time.time() - t > 10:
-            break
+
 
 # The End
 vrep.simxStopSimulation(clientID, vrep.simx_opmode_oneshot)
