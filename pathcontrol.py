@@ -1,6 +1,5 @@
 """
-Proyecto 1: Navegación reactiva con seguimiento de trayectoria
-Funciones utilizadas
+Helper functions used
 """
 from scipy.interpolate import interp1d
 import numpy as np
