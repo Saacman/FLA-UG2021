@@ -74,7 +74,7 @@ while np.linalg.norm(target - cur_pos) > 0.2:
         ur = urb if avoid else urc
         errf = vrep.simxSetJointTargetVelocity(clientID, motorL, ul, vrep.simx_opmode_streaming)
         errf = vrep.simxSetJointTargetVelocity(clientID, motorR, ur, vrep.simx_opmode_streaming)
-        if time.time() - t > 20:
+        if time.time() - t > 10:
             break
 
 # The End
